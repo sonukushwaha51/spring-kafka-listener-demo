@@ -23,8 +23,6 @@ public class KafkaMessageListener {
                                   @Header(name = "eventUuid", required = false) String eventUuid) {
 
         try {
-            System.out.println("Received message: " + message);
-            System.out.println("Event UUID: " + eventUuid);
             log.info("Message received {}", message);
             Event event = objectMapper.readValue(message, Event.class);
         } catch (JsonProcessingException exception) {
