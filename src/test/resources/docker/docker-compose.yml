@@ -1,43 +1,49 @@
 version: '1.0'
 
 services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.2.1
-    container_name: 'zk'
-    ports:
-      - 2181:2181
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    extra_hosts:
-      - "moby:127.0.0.1"
-      - "localhost: 127.0.0.1"
+#  zookeeper:
+#    image: confluentinc/cp-zookeeper:7.2.1
+#    container_name: 'zk'
+#    ports:
+#      - 2181:2181
+#    environment:
+#      ZOOKEEPER_CLIENT_PORT: 2181
+#      ZOOKEEPER_TICK_TIME: 2000
+#    extra_hosts:
+#      - "moby:127.0.0.1"
+#      - "localhost: 127.0.0.1"
 
   kafka:
-    image: confluentinc/cp-kafka:7.2.1
+    image: confluentinc/cp-kafka:latest
     container_name: 'kafka'
     hostname: kafka
     ports:
       - "9092:9092"
-    depends_on:
-      - zookeeper
+      - "29092:29092"
+      - "9093:9093"
+#    depends_on:
+#      - zookeeper
     extra_hosts:
       - "moby:127.0.0.1"
       - "localhost: 127.0.0.1"
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      #KAFKA_PROCESS_ROLES: broker,controller
-      #KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: kafka:29092
-      #KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#      KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: kafka:29093
+      CLUSTER_ID: 'kafka-kraft-cluster-local'
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://kafka:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
 
   init-kafka:
-    image: confluentinc/cp-kafka:7.2.1
+    image: confluentinc/cp-kafka:latest
     container_name: init-kafka
     depends_on:
       - kafka
@@ -49,7 +55,7 @@ services:
         kafka-topics --create --topic parking-inbound-sync --partitions 1 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092;
         echo 'Topic created successfully';
       "
-    
+
   kafka-ui:
     image: 'provectuslabs/kafka-ui:latest'
     container_name: 'kafka-ui'
@@ -57,8 +63,8 @@ services:
       - '8085:8080'
     depends_on:
       - kafka
-      - zookeeper
+#      - zookeeper
     restart: always
     environment:
-      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_NAME=kafka-kraft-cluster-local
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
