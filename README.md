@@ -37,3 +37,27 @@ Run the application locally:
 Navigate to the directory where docker-compose.yml is located and run:
 
 `docker-compose -f docker-compose.yml up -d`
+
+# Docker setup without zookeeper
+
+`CLUSTER_ID: 'kafka-kraft-cluster-local'`
+
+`KAFKA_PROCESS_ROLES: broker,controller`
+
+`KAFKA_NODE_ID: 1`
+
+`KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'`
+
+`KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1`
+
+`KAFKA_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://kafka:9093`
+
+`KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092`
+
+`KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT`
+
+`KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER`
+
+`KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093`
+
+`KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL`
